@@ -1,5 +1,66 @@
+//
+// Created by Alvaro on 18/02/2023.
+//
 #include "ordenacao.h"
 #include "windows.h"
+
+
+// Imprime ordenacao
+void imprimeOrdenacao(TOrden *orden){
+    printf("\nComparacoes ");
+    printf("%d", orden->comparacoes);
+    printf("\nTempo ");
+    printf("%f", orden->tempo);
+    printf("\n\n********************************************************************************************");
+}
+
+// Cria ordenacao. Lembrar de usar free(ordenacao)
+TOrden *orden(int comparacoes, double tempo){
+    TOrden *ord = (TOrden *) malloc(sizeof(TOrden));
+    if(ord) memset(ord, 0, sizeof(TOrden));
+    ord->comparacoes = comparacoes;
+    ord->tempo = tempo;
+    return ord;
+}
+
+// Salva ordenacao no arquivo out, na posicao atual do cursor
+void salva_orden(TOrden *orden, FILE *out){
+    fwrite(&orden->comparacoes, sizeof(int), 1, out);
+    fwrite(&orden->tempo, sizeof(double ), 1, out);
+}
+
+// Le a ordenacao do arquivo in na posicao atual do cursor
+// Retorna um ponteiro para a ordenacao lida do arquivo
+TOrden *le_orden(FILE *in){
+    TOrden *ord = (TOrden *) malloc(sizeof(TOrden));
+    fread(&ord->comparacoes, sizeof(int), 1, in);
+    fread(&ord->tempo, sizeof(double ), 1, in);
+    return ord;
+}
+
+// Retorna tamanho da ordencao em bytes
+int tamanho_ordenacao(){
+    return sizeof(int)  //comparacoes
+           + sizeof(double ); //tempo
+}
+
+// Retorna o tamanho do arquivo
+int tamanho_arquivo_ordenacao(FILE *arq){
+    fseek(arq, 0, SEEK_END);
+    int tam = trunc(ftell(arq)/tamanho_ordenacao());
+    return tam;
+}
+
+// Imprime arquivo ordencao
+void imprime_arquivo_ordenacao(FILE *arq){
+    //le o arquivo e coloca no vetor
+    rewind(arq); //posiciona cursor no inicio do arquivo
+    TOrden *ord = le_orden(arq);
+    while (!feof(arq)) {
+        imprimeOrdenacao(ord);
+        ord = le_orden(arq);
+    }
+}
 
 
 // Insertion Sort disco: Maior capacidade de armazenamento, entretanto mais lento
@@ -11,8 +72,7 @@ void insertion_sort_disco(FILE *arq, int tam) {
 
     // Variáveis para calcular o tempo
     double time_spent = 0.0;
-    clock_t begin, end;
-    begin = clock();
+    clock_t begin = clock();
 
     // Variável para calcular a quantidade de comparações
 
@@ -24,6 +84,7 @@ void insertion_sort_disco(FILE *arq, int tam) {
         // posiciona o arquivo no registro j
         fseek(arq, (j-1) * tamanho(), SEEK_SET);
         TFunc *fj = le(arq);
+        printf("\n********* Funcionario atual: %d\n", fj->cod);
         i = j - 1;
         //posiciona o cursor no registro i
         fseek(arq, (i-1) * tamanho(), SEEK_SET);
@@ -32,33 +93,40 @@ void insertion_sort_disco(FILE *arq, int tam) {
         while ((i > 0) && (fi->cod > fj->cod)) {
             // posiciona o cursor no registro i+1
             fseek(arq, i * tamanho(), SEEK_SET);
+            printf("Salvando funcionario %d na posicao %d\n", fi->cod, i+1);
             salva(fi, arq);
             i = i - 1;
             // le registro i
             fseek(arq, (i-1) * tamanho(), SEEK_SET);
             fi = le(arq);
+            printf("fi = %d; i = %d\n", fi->cod, i);
             comp ++;
         }
         // posiciona cursor no registro i + 1
         fseek(arq, (i) * tamanho(), SEEK_SET);
+        printf("*** Salvando funcionario %d na posicao %d\n", fj->cod, i+1);
         // salva registro j na posiÃ§Ã£o i
         salva(fj, arq);
     }
-    end = clock();
+    Sleep(1);
+
+    clock_t end = clock();
     time_spent += (double)(end - begin)/ CLOCKS_PER_SEC;
 
     FILE *out;
-    out = fopen("insertion_disco.txt", "w");
+    out = fopen("insertion_disco.dat", "wb+");
 
-    fprintf(out, "\n|| Total de comparacoes: %d\n", comp);
-    fprintf(out, "|| Tempo gasto: %f\n", time_spent);
-    printf("|| Total de comparacoes: %d", comp);
-    printf("\n|| Tempo gasto: %f", time_spent);
+    TOrden *od;
+    od = orden(comp, time_spent);
+    salva_orden(od, out);
+
+    imprimeOrdenacao(od);
 
     //descarrega o buffer para ter certeza que dados foram gravados
     fflush(arq);
     fflush(out);
-    fclose(out);
+
+    free(od);
 
 }
 
@@ -67,13 +135,13 @@ void insertion_sort(FILE *arq, int tam) {
 
     // Variáveis para calcular o tempo
     double time_spent = 0.0;
-    clock_t begin, end;
-    begin = clock();
+    int i = 0;
+    int comp = 0;
+    clock_t begin = clock();
 
     // Variável para calcular a quantidade de comparações
-    int comp = 0;
 
-    int i = 0;
+
     TFunc *v[tam - 1];
     //le o arquivo e coloca no vetor
     rewind(arq); //posiciona cursor no inicio do arquivo
@@ -102,21 +170,22 @@ void insertion_sort(FILE *arq, int tam) {
     }
     Sleep(1);
 
-    end = clock();
+    clock_t end = clock();
     time_spent += (double)(end - begin)/ CLOCKS_PER_SEC;
 
     FILE *out;
-    out = fopen("insertion_memoria.txt", "w");
+    out = fopen("insertion_memoria.dat", "wb+");
 
-    fprintf(out, "\n|| Total de comparacoes: %d\n", comp);
-    fprintf(out, "|| Tempo gasto: %f\n", time_spent);
-    printf("|| Total de comparacoes: %d", comp);
-    printf("\n|| Tempo gasto: %f", time_spent);
+    TOrden *od;
+    od = orden(comp, time_spent);
+    salva_orden(od, out);
+
+    imprimeOrdenacao(od);
 
     //descarrega o buffer para ter certeza que dados foram gravados
     fflush(arq);
     fflush(out);
-    fclose(out);
+    free(od);
 }
 
 // Sobrescreve funcionario
@@ -151,12 +220,100 @@ void shuffle(FILE *in) {
 
 }
 
+void classificacao_interna(char *nome_arquivo_entrada, Lista *nome_arquivos_saida, int M) {
+
+    // Variáveis para calcular o tempo
+    double time_spent = 0.0;
+    clock_t begin = clock();
+
+    // Variável para calcular a quantidade de comparações
+    int comp = 0;
+
+    int fim = 0; //variável de controle para saber se arquivo de entrada terminou
+    FILE *arq; //declara ponteiro para arquivo
+
+    //abre arquivo para leitura
+    if ((arq = fopen(nome_arquivo_entrada, "rb")) == NULL) {
+        printf("Erro ao abrir arquivo de entrada\n");
+    } else {
+
+        //le primeiro cliente
+        TFunc *func = le(arq);
+
+        while (!(fim)) {
+            //le o arquivo e coloca no vetor
+            TFunc *v[M];
+
+            int i = 0;
+            while (!feof(arq) && i < M) {
+                v[i] = func;
+                func = le(arq);
+                i++;
+            }
+
+            //ajusta tamanho M caso arquivo de entrada tenha terminado antes do vetor
+            if (i != M) {
+                M = i;
+            }
+
+            //faz ordenacao
+            for (int j = 1; j < M; j++) {
+                TFunc *c = v[j];
+                i = j - 1;
+                while ((i >= 0) && (v[i]->cod > c->cod)) {
+                    v[i + 1] = v[i];
+                    i = i - 1;
+                    comp++;
+                }
+                v[i + 1] = c;
+            }
+
+            //cria arquivo de particao e faz gravacao
+            char *nome_particao = nome_arquivos_saida->nome;
+            nome_arquivos_saida = nome_arquivos_saida->prox;
+
+            printf("\n%s\n", nome_particao);
+
+            FILE *p;
+            if ((p = fopen(nome_particao, "wb")) == NULL) {
+                printf("Erro criar arquivo de saida\n");
+            } else {
+                for (int m = 0; m < M; m++) {
+                    salva(v[m], p);
+                    imprime(v[m]);
+                }
+                fclose(p);
+            }
+            if (feof(arq)) {
+
+                fim = 1;
+            }
+        }
+
+        clock_t end = clock();
+        time_spent += (double)(end - begin)/ CLOCKS_PER_SEC;
+
+        FILE *out;
+        out = fopen("classificao_interna.dat", "wb");
+
+        TOrden *od;
+        od = orden(comp, time_spent);
+        salva_orden(od, out);
+
+        imprimeOrdenacao(od);
+
+        fflush(out);
+        fflush(arq);
+
+        free(od);
+    }
+}
+
 void selecao_com_substituicao(FILE *arq, Lista *nome_arquivos_saida, int M) {
 
     // Variáveis para calcular o tempo
     double time_spent = 0.0;
-    clock_t begin, end;
-    begin = clock();
+    clock_t begin = clock();
 
     // Variável para calcular a quantidade de comparações
     int comp = 0;
@@ -187,11 +344,11 @@ void selecao_com_substituicao(FILE *arq, Lista *nome_arquivos_saida, int M) {
     // ajusta a posição do cursor visto que na linha 237 eu leio de novo um funcionario do arquivo e isso faz eu pular um dos funcionarios, dessa maneira esse erro é corrigido
     fseek(arq, tamanho() * i, SEEK_SET);
 
+
     while (!(fim)) {
 
         //cria arquivo de particao
         // A quantidade de nomes na lista tem que ser grande
-
         char *nomeParticao = nome_arquivos_saida->nome;
         nome_arquivos_saida = nome_arquivos_saida->prox;
 
@@ -200,6 +357,7 @@ void selecao_com_substituicao(FILE *arq, Lista *nome_arquivos_saida, int M) {
             printf("Erro criar arquivo de saida\n");
             exit(1);
         }
+
 
         // Inicializando o vetor, que diz quem esta congelado, com todas as variáveis descongeladas
         for (int j = 0; j < M; ++j) {
@@ -221,6 +379,7 @@ void selecao_com_substituicao(FILE *arq, Lista *nome_arquivos_saida, int M) {
             for (int k = 0; k < M; k++) {
                 if (desc[k] == 0 && v[k] != NULL) {
                     menor = v[k];
+                    //cod = menor->cod;
                     posicao_menor = k;
                     break;
                 }
@@ -290,28 +449,31 @@ void selecao_com_substituicao(FILE *arq, Lista *nome_arquivos_saida, int M) {
 
     }
 
-    end = clock();
+    clock_t end = clock();
     time_spent += (double)(end - begin)/ CLOCKS_PER_SEC;
 
     FILE *out;
-    out = fopen("selecao_com_substituicao.txt", "w");
+    out = fopen("selecao_com_substituicao.dat", "wb");
 
-    fprintf(out, "\n|| Total de comparacoes: %d\n", comp);
-    fprintf(out, "|| Tempo gasto: %f\n", time_spent);
+    TOrden *od;
+    od = orden(comp, time_spent);
+    salva_orden(od, out);
+
+    imprimeOrdenacao(od);
 
     fflush(out);
     fflush(arq);
-    fclose(out);
+
 
     // Liberando variáveis utilizadas
     free(func);
+    free(od);
 }
 
-int intercalacao_basico(char *nome_arquivo_saida, int num_p, Lista *nome_particoes) {
+void intercalacao_basico(char *nome_arquivo_saida, int num_p, Lista *nome_particoes) {
 
     double time_spent = 0.0;
-    clock_t begin, end;
-    begin = clock();
+    clock_t begin = clock();
     int comp = 0;
 
     int fim = 0; //variavel que controla fim do procedimento
@@ -377,74 +539,83 @@ int intercalacao_basico(char *nome_arquivo_saida, int num_p, Lista *nome_partico
             fclose(v[i].file);
         }
 
-        end = clock();
+        Sleep(1);
+
+        clock_t end = clock();
         time_spent += (double)(end - begin)/ CLOCKS_PER_SEC;
 
         FILE *arq;
-        arq = fopen("intercalacao_basico.txt", "w");
+        arq = fopen("intercalacao_basico.dat", "wb");
 
-        fprintf(arq, "\n|| Total de comparacoes: %d\n", comp);
-        fprintf(arq, "|| Tempo gasto: %f\n", time_spent);
+        TOrden *od;
+        od = orden(comp, time_spent);
+        salva_orden(od, arq);
+
+        imprimeOrdenacao(od);
 
         //fecha arquivo de saida
-        fflush(arq);
         fclose(out);
         fclose(arq);
 
-        return comp;
+        free(od);
     }
 }
 
 void intercalacao_otima(char *nome_arquivo_saida, int num_p, Lista *nome_particoes, int f) {
-    int numP = num_p;
-    int i = num_p;
-    char nome_arquivo[50];
+    // Variáveis para calcular o tempo
+    clock_t start, end;
+    double time_spent = 0.0;
+    start = clock();
 
+    // Variavel para calcular a quantidade de comparações
     int comp = 0;
 
-    // Variáveis para calcular o tempo
-    clock_t begin, end;
-    double time_spent = 0.0;
-    begin = clock();
-
-    // Lista auxiliar
+    // Variáveis auxiliares
+    int numP = num_p;
+    int p = num_p;
+    char nome_arquivo[50];
     Lista *pLista = NULL;
-    // retirar o primeiro nome da pLista
-    while (i > f - 1) {
+
+    while (p > f - 1) {
         Lista *aux = cria_nomes(cria_str("anything"), NULL);
-        for (int j = 0; j < f - 1; j++) {
+        for (int k = 0; k < f - 1; k++) {
             pLista = nome_particoes->prox;
             adiciona_nomes(aux, nome_particoes->nome);
+            nome_particoes = pLista;
             free(nome_particoes->nome);
             free(nome_particoes);
-            nome_particoes = pLista;
-            i--;
+            p--;
         }
         pLista = aux->prox;
         free(aux->nome);
         free(aux);
         aux = pLista;
         numP++;
-
         sprintf(nome_arquivo, "p%d.dat", numP);
-        comp += intercalacao_basico(nome_arquivo, f-1, aux);
+        intercalacao_basico(nome_arquivo, f-1, aux);
         adiciona_nomes(nome_particoes, nome_arquivo);
         libera_nomes(aux);
     }
     // Ordenação final
-    comp += intercalacao_basico(nome_arquivo_saida, i, nome_particoes);
+    intercalacao_basico(nome_arquivo_saida, p, nome_particoes);
 
     // Tempo de execucao em arquivo
     end = clock();
-    time_spent += (double) (end - begin) / CLOCKS_PER_SEC;
+    time_spent += (double) (end - start) / CLOCKS_PER_SEC;
 
-    FILE *out = fopen("intercalacao_otima.txt", "w");
+    FILE *arq;
+    arq = fopen("intercalacao_otima.dat", "wb");
 
-    fprintf(out, "\n|| Total de comparacoes: %d\n", comp);
-    fprintf(out, "|| Tempo gasto: %f\n", time_spent);
-    printf("|| Total de comparacoes: %d", comp);
-    printf("\n|| Tempo gasto: %f", time_spent);
+    TOrden *od;
+    od = orden(comp, time_spent);
+    salva_orden(od, arq);
 
+    imprimeOrdenacao(od);
+
+    fflush(arq);
+
+    free(od);
     // Apagar as particoes
-    fclose(out);
+
+
 }

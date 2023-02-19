@@ -1,5 +1,9 @@
-#ifndef TRABALHOAEDS_FUNCIONARIO_H
-#define TRABALHOAEDS_FUNCIONARIO_H
+//
+// Created by Alvaro on 18/02/2023.
+//
+
+#ifndef TRABALHO1_FUNCIONARIO_H
+#define TRABALHO1_FUNCIONARIO_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,4 +46,4 @@ int tamanho_arquivo(FILE *arq);
 
 
 
-#endif //TRABALHOAEDS_FUNCIONARIO_H
+#endif //TRABALHO1_FUNCIONARIO_H

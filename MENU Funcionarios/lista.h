@@ -1,5 +1,9 @@
-#ifndef TRABALHOAEDS_LISTA_H
-#define TRABALHOAEDS_LISTA_H
+//
+// Created by Alvaro on 18/02/2023.
+//
+
+#ifndef TRABALHO1_LISTA_H
+#define TRABALHO1_LISTA_H
 
 typedef struct Lista {
     char *nome;
@@ -24,4 +28,4 @@ void adiciona_nomes(Lista *nomes, char *nome);
 // Libera lista
 void libera_nomes(Lista *nomes);
 
-#endif //TRABALHOAEDS_LISTA_H
+#endif //TRABALHO1_LISTA_H

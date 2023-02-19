@@ -1,5 +1,9 @@
-#ifndef TRABALHOAEDS_INTERFACE_H
-#define TRABALHOAEDS_INTERFACE_H
+//
+// Created by Alvaro on 18/02/2023.
+//
+
+#ifndef TRABALHO1_INTERFACE_H
+#define TRABALHO1_INTERFACE_H
 
 #include "funcionario.h"
 
@@ -19,6 +23,4 @@ void opcao_busca();
 
 void opcao_ordena();
 
-void imprime_arquivo_txt(FILE *arq);
-
-#endif //TRABALHOAEDS_INTERFACE_H
+#endif //TRABALHO1_INTERFACE_H

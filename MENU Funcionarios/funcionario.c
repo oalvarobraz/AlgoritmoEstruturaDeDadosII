@@ -1,3 +1,6 @@
+//
+// Created by Alvaro on 18/02/2023.
+//
 #include "funcionario.h"
 #include "windows.h"
 
@@ -84,3 +87,7 @@ int tamanho_arquivo(FILE *arq) {
     int tam = trunc(ftell(arq) / tamanho());
     return tam;
 }
+
+
+
+

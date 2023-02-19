@@ -1,3 +1,6 @@
+//
+// Created by Alvaro on 18/02/2023.
+//
 #include "interface.h"
 #include "ordenacao.h"
 #include "lista.h"
@@ -18,11 +21,14 @@ void MSG_MENU(){
     printf(" \n|| (8) ORDENAR POR INSERION SORT DISCO");
     printf(" \n|| (9) ORDENAR POR INSERION SORT MEMORIA");
     printf(" \n|| (10) EMBARALHAR ARQUIVO");
-    printf(" \n|| (11) SELECAO COM SUBSTITUICAO");
-    printf(" \n|| (12) INTERCALACAO OTIMA (necessita antes ter realizado a selecao com substituicao)");
-    printf(" \n|| (13) SELECAO COM SUBSTITUICAO + INTERCALACAO OTIMA");
-    printf(" \n|| (14) IMPRIMINDO RESULTADOS DA BUSCA");
-    printf(" \n|| (15) IMPRIMINDO RESULTADOS DA ORDENACAO");
+    printf(" \n|| (11) CLASSIFICACAO INTERNA");
+    printf(" \n|| (12) SELECAO COM SUBSTITUICAO");
+    printf(" \n|| (13) INTERCALACAO BASICA (necessita antes ter realizado a classificacao interna ou a selecao com substituicao)");
+    printf(" \n|| (14) INTERCALACAO OTIMA (necessita antes ter realizado a classificacao interna ou a selecao com substituicao)");
+    printf(" \n|| (15) CLASSIFICACAO INTERNA + INTERCALACAO BASICA");
+    printf(" \n|| (16) SELECAO COM SUBSTITUICAO + INTERCALACAO OTIMA");
+    printf(" \n|| (17) IMPRIMINDO RESULTADOS DA BUSCA");
+    printf(" \n|| (18) IMPRIMINDO RESULTADOS DA ORDENACAO");
     printf(" \n|| (0) SAIR");
 }
 
@@ -67,29 +73,9 @@ void MSG_ORDENA(){
     printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> (16) IMPRIMINDO RESULTADOS DA ORDENACAO <<<<<<<<<<<<<<<<<<<<<<<<");
     printf("\n\n|| (1) RESULTADO DA INSERTION SORT DISCO");
     printf(" \n|| (2) RESULTADO DA INSERTION SORT MEMORIA");
-    printf(" \n|| (3) RESULTADO DA INTERCALACAO OTIMA");
+    printf(" \n|| (3) RESULTADO DA INTERCALACAO BASICO");
+    printf(" \n|| (4) RESULTADO DA INTERCALACAO OTIMA");
     printf(" \n|| (0) VOLTAR PARA O MENU PRINCIPAL");
-}
-
-void imprime_arquivo_txt(FILE *arq){
-    int i;
-    char Linha[100];
-    char *result;
-    // Abre um arquivo TEXTO para LEITURA
-    if (arq == NULL)  // Se houve erro na abertura
-    {
-        printf("|| Erro ao abrir o arquivo\n");
-        return;
-    }
-    i = 1;
-    while (!feof(arq))
-    {
-        // Lê uma linha (inclusive com o '\n')
-        result = fgets(Linha, 100, arq);  // o 'fgets' lê até 99 caracteres ou até o '\n'
-        if (result)  // Se foi possível ler
-            printf("%s",Linha);
-        i++;
-    }
 }
 
 void opcao_busca(){
@@ -111,20 +97,20 @@ void opcao_busca(){
             case 1:
                 system("cls");
                 printf("\n|| LENDO O RESULTADO DA BUSCA BINARIA ||\n");
-                busca = fopen("busca_binaria.txt", "r");
-                imprime_arquivo_txt(busca);
-                printf("\n");
+                busca = fopen("busca_binaria.dat", "rb");
+                imprime_arquivo_busca(busca);
                 fclose(busca);
+                printf("\n");
                 system("PAUSE");
                 system("cls");
                 break;
             case 2:
                 system("cls");
                 printf("\n|| LENDO O RESULTADO DA BUSCA SEQUENCIAL ||\n");
-                busca = fopen("busca_sequencial.txt", "r");
-                imprime_arquivo_txt(busca);
-                printf("\n");
+                busca = fopen("busca_sequencial.dat", "rb");
+                imprime_arquivo_busca(busca);
                 fclose(busca);
+                printf("\n");
                 system("PAUSE");
                 system("cls");
                 break;
@@ -156,8 +142,11 @@ void opcao_ordena(){
             case 1:
                 system("cls");
                 printf("\n|| LENDO O RESULTADO DA INSERTION SORT DISCO ||\n");
-                ordena = fopen("insertion_disco.txt", "r");
-                imprime_arquivo_txt(ordena);
+                ordena = fopen("insertion_disco.dat", "rb");
+                if(tamanho_arquivo_ordenacao(ordena) != 0){
+                    imprime_arquivo_ordenacao(ordena);
+                }else
+                    printf("-> Arquivo esta vazio");
                 printf("\n");
                 system("PAUSE");
                 fclose(ordena);
@@ -166,8 +155,11 @@ void opcao_ordena(){
             case 2:
                 system("cls");
                 printf("\n|| LENDO O RESULTADO DA INSERTION SORT MEMORIA ||\n");
-                ordena = fopen("insertion_memoria.txt", "r");
-                imprime_arquivo_txt(ordena);
+                ordena = fopen("insertion_memoria.dat", "rb");
+                if(tamanho_arquivo_ordenacao(ordena) != 0){
+                    imprime_arquivo_ordenacao(ordena);
+                }else
+                    printf("-> Arquivo esta vazio");
                 printf("\n");
                 system("PAUSE");
                 fclose(ordena);
@@ -175,9 +167,25 @@ void opcao_ordena(){
                 break;
             case 3:
                 system("cls");
+                printf("\n|| LENDO O RESULTADO DA INTERCALACAO BASICO ||\n");
+                ordena = fopen("intercalacao_basico.dat", "rb");
+                if(tamanho_arquivo_ordenacao(ordena) != 0){
+                    imprime_arquivo_ordenacao(ordena);
+                }else
+                    printf("-> Arquivo esta vazio");
+                printf("\n");
+                system("PAUSE");
+                fclose(ordena);
+                system("cls");
+                break;
+            case 4:
+                system("cls");
                 printf("\n|| LENDO O RESULTADO DA INTERCALACAO OTIMA ||\n");
-                ordena = fopen("intercalacao_otima.txt", "r");
-                imprime_arquivo_txt(ordena);
+                ordena = fopen("intercalacao_otima.dat", "rb");
+                if(tamanho_arquivo_ordenacao(ordena) != 0){
+                    imprime_arquivo_ordenacao(ordena);
+                }else
+                    printf("-> Arquivo esta vazio");
                 printf("\n");
                 system("PAUSE");
                 fclose(ordena);
@@ -197,10 +205,12 @@ void MENU(FILE *arq){
     int codigo;
 
     FILE *arq_busca_bin, *arq_busca_seq;
+    arq_busca_bin = fopen("busca_binaria.dat", "wb+");
+    arq_busca_seq = fopen("busca_sequencial.dat", "wb+");
 
     Lista *lst = NULL;
     lst = cria_nomes(cria_str("p1.dat"), cria_nomes(cria_str("p2.dat"), cria_nomes(cria_str("p3.dat"), cria_nomes(
-            cria_str("p4.dat"), cria_nomes(cria_str("p5.dat"), cria_nomes(cria_str("p6.dat"), cria_nomes(cria_str("p7.dat"), cria_nomes(cria_str("p8.dat"), NULL))))))));
+            cria_str("p4.dat"), NULL))));
 
     int opcao;
     do{
@@ -215,6 +225,8 @@ void MENU(FILE *arq){
                 if(faux != NULL){
                     free(faux);
                 }
+                fclose(arq_busca_bin);
+                fclose(arq_busca_seq);
                 libera_nomes(lst);
                 system("PAUSE");
 
@@ -245,7 +257,6 @@ void MENU(FILE *arq){
                 system("cls");
                 printf("\n|| PESQUISANDO FUNCIONARIO ||\n");
                 printf("|| Qual o codigo do funcionario: ");
-                arq_busca_bin = fopen("busca_binaria.txt", "w");
                 scanf("%d", &codigo);
                 faux = busca_binaria(codigo, arq, 0, tamanho_arquivo(arq), arq_busca_bin);
 
@@ -257,7 +268,6 @@ void MENU(FILE *arq){
                 }
 
                 printf("\n");
-                fclose(arq_busca_bin);
                 system("PAUSE");
                 system("cls");
 
@@ -267,7 +277,6 @@ void MENU(FILE *arq){
                 printf("\n|| PESQUISANDO FUNCIONARIO ||\n");
                 printf("|| Qual o codigo do funcionario: ");
                 scanf("%d", &codigo);
-                arq_busca_seq = fopen("busca_sequencial.txt", "w");
                 faux = busca_sequencial(arq, codigo, arq_busca_seq);
 
                 if(faux != NULL){
@@ -278,14 +287,12 @@ void MENU(FILE *arq){
                 }
 
                 printf("\n");
-                fclose(arq_busca_seq);
                 system("PAUSE");
                 system("cls");
 
                 break;
             case 6:
                 system("cls");
-                arq_busca_bin = fopen("busca_binaria.txt", "w");
                 for (int i = 0; i< 50; i++){
                     codigo = 1 +(rand() % 5500);
                     printf("\n|| Codigo do funcionario: %d\n\n", codigo);
@@ -300,14 +307,12 @@ void MENU(FILE *arq){
                 }
 
                 printf("\n");
-                fclose(arq_busca_bin);
                 system("PAUSE");
                 system("cls");
 
                 break;
             case 7:
                 system("cls");
-                arq_busca_seq = fopen("busca_sequencial.txt", "a+");
                 for (int i = 0; i< 50; i++){
                     codigo = 1 +(rand() % 5000);
                     printf("\n|| Codigo do funcionario: %d\n\n", codigo);
@@ -322,7 +327,6 @@ void MENU(FILE *arq){
                 }
 
                 printf("\n");
-                fclose(arq_busca_seq);
                 system("PAUSE");
                 system("cls");
 
@@ -341,45 +345,76 @@ void MENU(FILE *arq){
                 printf("\n|| INSERION SORT MEMORIA ||\n");
                 insertion_sort(arq,  tamanho_arquivo(arq));
                 printf("\n|| ARQUIVO ORDENADO ||\n");
+
+
                 break;
             case 10:
                 system("cls");
                 printf("\n|| EMBARALHANDO ARQUIVO ||\n");
                 shuffle(arq);
                 printf("|| ARQUIVO EMBARALHADO ||\n");
+
                 break;
             case 11:
                 system("cls");
-                printf("\n|| SELECAO COM SUBSTITUICAO ||\n");
-                selecao_com_substituicao(arq, lst, 200);
+                printf("\n|| CLASSIFICACAO INTERNA ||\n");
+                classificacao_interna("funcionario.dat", lst, 1000);
                 printf("\n");
                 system("PAUSE");
                 system("cls");
                 break;
             case 12:
                 system("cls");
-                printf("\n|| INTERCALACAO OTIMA: ");
-                intercalacao_otima("funcionario.dat", conta_nomes(lst), lst, 5);
-                printf("\n|| ARQUIVO ORDENADO ||\n");
+                printf("\n|| SELECAO COM SUBSTITUICAO ||\n");
+                selecao_com_substituicao(arq, lst, 1000);
+                printf("\n");
                 system("PAUSE");
                 system("cls");
                 break;
             case 13:
                 system("cls");
-                printf("\n|| SELECAO COM SUBBSTITUICAO ||\n");
-                selecao_com_substituicao(arq,lst,625);
-                intercalacao_otima("funcionario.dat", conta_nomes(lst), lst, 5);
+                printf("\n|| INTERCALACAO BASICA: ");
+                intercalacao_basico("funcionario.dat", conta_nomes(lst), lst);
                 printf("\n|| ARQUIVO ORDENADO ||\n");
                 system("PAUSE");
                 system("cls");
                 break;
             case 14:
                 system("cls");
+                printf("\n|| INTERCALACAO OTIMA: ");
+                intercalacao_otima("funcionario.dat", conta_nomes(lst), lst, 3);
+                printf("\n|| ARQUIVO ORDENADO ||\n");
+                system("PAUSE");
+                system("cls");
+                break;
+            case 15:
+                system("cls");
+                printf("\n|| CLASSIFICACAO INTERNA ||\n");
+                classificacao_interna("funcionario.dat",lst,1000);
+                printf("\n|| INTERCALACAO BASICO ||\n");
+                intercalacao_basico("funcionario.dat", conta_nomes(lst), lst);
+                printf("\n|| ARQUIVO ORDENADO ||\n");
+                system("PAUSE");
+                system("cls");
+                break;
+            case 16:
+                system("cls");
+                printf("\n|| SELECAO COM SUBBSTITUICAO ||\n");
+                selecao_com_substituicao(arq,lst,1000);
+                printf("\n|| PARA AVANCAR PARA A INTERCALACAO OTIMA: ");
+                printf("\n|| INTERCALACAO OTIMA ||\n");
+                intercalacao_otima("funcionario.dat", conta_nomes(lst), lst, 5);
+                printf("\n|| ARQUIVO ORDENADO ||\n");
+                system("PAUSE");
+                system("cls");
+                break;
+            case 17:
+                system("cls");
                 opcao_busca();
                 printf("\n");
                 system("cls");
                 break;
-            case 15:
+            case 18:
                 system("cls");
                 opcao_ordena();
                 printf("\n");
