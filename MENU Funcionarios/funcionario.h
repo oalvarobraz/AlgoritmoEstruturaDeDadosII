@@ -1,9 +1,16 @@
-//
-// Created by Alvaro on 18/02/2023.
-//
+#ifndef TRABALHOAEDS_FUNCIONARIO_H
+#define TRABALHOAEDS_FUNCIONARIO_H
 
-#ifndef TRABALHO1_FUNCIONARIO_H
-#define TRABALHO1_FUNCIONARIO_H
+/*
+ Dentro deste arquivo estão as declarações das funções, além disso eu importei algumas bibliotecas
+ para o funcionamento do meu código como a lista.h, para que eu pudesse utilizar a strcut Lista
+ e também a time.h, que foi utilizada para calcular o tempo de execução do algoritmo, eu podia ter
+ calculado o tempo de execução dentro ou fora do algoritmo, entretanto eu preferi calcular dentro do
+ algoritmo mesmo.
+ Além do que foi falado acima, eu criei uma struct Funcionario
+
+ */
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,4 +53,4 @@ int tamanho_arquivo(FILE *arq);
 
 
 
-#endif //TRABALHO1_FUNCIONARIO_H
+#endif //TRABALHOAEDS_FUNCIONARIO_H
