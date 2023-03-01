@@ -5,6 +5,14 @@
 #ifndef TRABALHO1_BUSCA_H
 #define TRABALHO1_BUSCA_H
 
+/*
+ Dentro deste arquivo estão as declarações das funções, além disso eu importei algumas bibliotecas
+ para o funcionamento do meu código como a funcionario.h, para que eu pudesse utilizar a strcut Func
+ e também a time.h, que foi utilizada para calcular o tempo de execução do algoritmo, eu podia ter
+ calculado o tempo de execução dentro ou fora do algoritmo, entretanto eu preferi calcular dentro do
+ algoritmo mesmo
+
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
