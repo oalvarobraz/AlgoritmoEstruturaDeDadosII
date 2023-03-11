@@ -1,6 +1,14 @@
 #include "btree.h"
 #include "queue.h"
 
+void MSG_MENU() {
+    printf("\n\t>>>>>>>>>>>>>>>>>>>>>>> OPCOES DE MENU <<<<<<<<<<<<<<<<<<<<<<<<");
+    printf("\n\n\t1. PESQUISAR FUNCIONARIO");
+    printf("  \n\t2. REMOVER 1 FUNCIONARIO");
+    printf("  \n\t3. IMPRIMIR ARVORE");
+    printf("  \n\t0. SAIR");
+}
+
 int main() {
     FILE *fp;
     fp = fopen("file.dat", "wb+");
@@ -13,17 +21,25 @@ int main() {
     }
 
     queue *q0 = createQueue(2000);
+//
+//    while ()
+//    MSG_MENU();
+
+    element key = {.codigo = 150};
+
+    int search = btSearch(tree->root, tree->order, key, fp);
+    printf("%d\n", search);
+
+    element n2 = {.codigo = 150};
+    btDelete(tree, n2, fp);
+
+    search = btSearch(tree->root, tree->order, key, fp);
+    printf("%d\n", search);
+
 
     btPrintTree(tree, q0, fp);
     printf("\n");
 
-    element key = {.codigo = 1000};
-    
-    element n2 = {.codigo = 150};
-    btDelete(tree, n2, fp);
-
-    int search = btSearch(tree->root, tree->order, key, fp);
-    printf("%d\n", search);
 //    queue *q = createQueue(15);
 //
 //    btPrintTree(tree, q, fp);
