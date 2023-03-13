@@ -3,7 +3,8 @@
 //
 
 #include "interface.h"
-void MSG_MENU(){
+
+void MSG_MENU() {
     printf("\n\n>>>>>>>>>>>>>>>>>>>>>>> OPCOES DE MENU <<<<<<<<<<<<<<<<<<<<<<<<");
     printf(" \n|| (1) IMPRIMIR ARQUIVO");
     printf(" \n|| (2) PESQUISAR FUNCIONARIO");
@@ -14,16 +15,16 @@ void MSG_MENU(){
 }
 
 
-void MENU(FILE *arq, bTree *tree, queue *q0){
+void MENU(FILE *arq, bTree *tree, queue *q0) {
     int codigo;
 
     int opcao;
-    do{
+    do {
         MSG_MENU();
         printf("\n\n|| Digite uma opcao: ");
         fflush(stdin);
         scanf("%d", &opcao);
-        switch(opcao){
+        switch (opcao) {
             case 0:
                 system("cls");
                 printf("\n<<<<<<<<< SAINDO DO PROGRAMA >>>>>>>>>>\n");
@@ -46,7 +47,7 @@ void MENU(FILE *arq, bTree *tree, queue *q0){
                 element ke = {.codigo = codigo};
                 int search = btSearch(tree->root, tree->order, ke, arq);
                 if (search != -1) {
-                    btPrintElement(*tree,ke,arq);
+                    btPrintElement(*tree, ke, arq);
                 } else {
                     printf("Funcionario nao encontrado.\n");
                 }
@@ -58,14 +59,14 @@ void MENU(FILE *arq, bTree *tree, queue *q0){
                 break;
             case 3:
                 system("cls");
-                for (int i = 0; i< 50; i++){
-                    codigo = 1 +(rand() % 5500);
+                for (int i = 0; i < 50; i++) {
+                    codigo = 1 + (rand() % 5500);
                     element ke2 = {.codigo = codigo};
                     printf("\n\n********************************************************************************************");
                     printf("\n|| Codigo do funcionario: %d\n\n", codigo);
                     int search2 = btSearch(tree->root, tree->order, ke2, arq);
                     if (search2 != -1) {
-                        btPrintElement(*tree,ke2,arq);
+                        btPrintElement(*tree, ke2, arq);
                         printf("\n\n********************************************************************************************");
                     } else {
                         printf("Funcionario nao encontrado.\n");
@@ -85,9 +86,9 @@ void MENU(FILE *arq, bTree *tree, queue *q0){
                 scanf("%d", &codigo);
                 element ke_remove = {.codigo = codigo};
                 int removed = btDelete(tree, ke_remove, arq);
-                if (removed == 1){
+                if (removed == 1) {
                     printf("|| Funcionario de codigo %d removido com sucesso!", codigo);
-                }else
+                } else
                     printf("|| Funcionario de codigo %d nao esta na arvore!", codigo);
                 printf("\n");
                 system("PAUSE");
@@ -95,21 +96,21 @@ void MENU(FILE *arq, bTree *tree, queue *q0){
                 break;
             case 5:
                 system("cls");
-                for (int i = 0; i< 50; i++){
-                    codigo = 1 +(rand() % 2000);
+                for (int i = 0; i < 50; i++) {
+                    codigo = 1 + (rand() % 2000);
                     element ke2 = {.codigo = codigo};
-                    if (codigo != 1023){
+                    if (codigo != 1023) {
                         printf("\n\n********************************************************************************************");
                         printf("\n|| Codigo do funcionario: %d\n\n", codigo);
                         int search2 = btSearch(tree->root, tree->order, ke2, arq);
                         if (search2 != -1) {
-                            btPrintElement(*tree,ke2,arq);
+                            btPrintElement(*tree, ke2, arq);
                             printf("\n\n********************************************************************************************");
                         } else {
                             printf("Funcionario nao encontrado.\n");
                             printf("\n\n********************************************************************************************");
                         }
-                    } else{
+                    } else {
                         i--;
                     }
                 }
@@ -123,5 +124,5 @@ void MENU(FILE *arq, bTree *tree, queue *q0){
                 system("PAUSE");
                 system("cls");
         } // fim do bloco switch
-    }while(opcao != 0);
+    } while (opcao != 0);
 }

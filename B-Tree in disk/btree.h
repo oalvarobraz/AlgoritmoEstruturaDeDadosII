@@ -11,19 +11,18 @@
 #include "queue.h"
 
 
-
-typedef struct element{
+typedef struct element {
     int codigo;
     float salario;
-}element;
+} element;
 
-typedef struct btNode{
-    int numKeys;
-    int isLeaf;
+typedef struct btNode {
+    int num_funcs;
+    int flag_folha;
     int pos_in_disk;
-    element *keys;
-    int *kids;
-}btNode;
+    element *funcs;
+    int *filhos;
+} btNode;
 
 typedef struct bTree {
     int order;
@@ -55,7 +54,7 @@ void btInsert(bTree *tree, element key, FILE *fp);
 int btDelete(bTree *tree, element key, FILE *fp);
 
 
-void btPrintTree(bTree *tree, queue *q,FILE *fp);
+void btPrintTree(bTree *tree, queue *q, FILE *fp);
 
 
 void btDestroy(bTree *tree, FILE *fp);

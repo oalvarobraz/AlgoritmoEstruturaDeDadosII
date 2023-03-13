@@ -15,15 +15,15 @@ btNode disk_read(int disk, int order, FILE *fp) {
     fseek(fp, offset, SEEK_SET);
 
     // Lendo as informações do arquiivo
-    fread(&read_node.numKeys, sizeof(read_node.numKeys), 1, fp);
-    fread(&read_node.isLeaf, sizeof(read_node.isLeaf), 1, fp);
+    fread(&read_node.num_funcs, sizeof(read_node.num_funcs), 1, fp);
+    fread(&read_node.flag_folha, sizeof(read_node.flag_folha), 1, fp);
     fread(&read_node.pos_in_disk, sizeof(read_node.pos_in_disk), 1, fp);
 
-    read_node.keys = malloc(sizeof(element) * order - 1);
-    fread(read_node.keys, sizeof(element), order - 1, fp);
+    read_node.funcs = malloc(sizeof(element) * order - 1);
+    fread(read_node.funcs, sizeof(element), order - 1, fp);
 
-    read_node.kids = malloc(sizeof(int) * order);
-    fread(read_node.kids, sizeof(int), order, fp);
+    read_node.filhos = malloc(sizeof(int) * order);
+    fread(read_node.filhos, sizeof(int), order, fp);
 
 
     return read_node;
@@ -35,28 +35,28 @@ void disk_write(btNode node, int order, FILE *fp) {
     fseek(fp, offset, SEEK_SET);
 
     // Escrevendo no arquivo
-    fwrite(&node.numKeys, sizeof(node.numKeys), 1, fp);
-    fwrite(&node.isLeaf, sizeof(node.isLeaf), 1, fp);
+    fwrite(&node.num_funcs, sizeof(node.num_funcs), 1, fp);
+    fwrite(&node.flag_folha, sizeof(node.flag_folha), 1, fp);
     fwrite(&node.pos_in_disk, sizeof(node.pos_in_disk), 1, fp);
-    fwrite(node.keys, sizeof(element), order - 1, fp);
-    fwrite(node.kids, sizeof(int), order, fp);
+    fwrite(node.funcs, sizeof(element), order - 1, fp);
+    fwrite(node.filhos, sizeof(int), order, fp);
 }
 
 btNode new_node(int order, int is_leaf) {
     btNode n;
 
-    n.numKeys = 0;
-    n.isLeaf = is_leaf;
+    n.num_funcs = 0;
+    n.flag_folha = is_leaf;
 
-    n.keys = malloc((order - 1) * sizeof(element));
+    n.funcs = malloc((order - 1) * sizeof(element));
     for (int i = 0; i < order - 1; i++) {
-        n.keys[i].codigo = -1;
-        n.keys[i].salario = -1;
+        n.funcs[i].codigo = -1;
+        n.funcs[i].salario = -1;
     }
 
-    n.kids = malloc((order) * sizeof(int));
+    n.filhos = malloc((order) * sizeof(int));
     for (int i = 0; i < order; i++) {
-        n.kids[i] = -1;
+        n.filhos[i] = -1;
     }
 
     return n;
@@ -65,10 +65,10 @@ btNode new_node(int order, int is_leaf) {
 void print_node_keys(btNode node, int order) {
     printf("\n[ %d", node.pos_in_disk);
     for (int i = 0; i < order - 1; i++) {
-        if (node.keys[i].codigo != -1) {
-            printf("\n  || Codigo: %d\n ", node.keys[i].codigo);
+        if (node.funcs[i].codigo != -1) {
+            printf("\n  || Codigo: %d\n ", node.funcs[i].codigo);
             printf(" || Nome: Fulano\n ");
-            printf(" || Salario: R$ %.2f\n ", node.keys[i].salario);
+            printf(" || Salario: R$ %.2f\n ", node.funcs[i].salario);
         }
     }
     printf("] ");
@@ -76,12 +76,12 @@ void print_node_keys(btNode node, int order) {
 
 void bt_split_child(btNode x, int pos, bTree *tree, FILE *fp, int split_root) {
 
-    btNode y = disk_read(x.kids[pos], tree->order, fp);
+    btNode y = disk_read(x.filhos[pos], tree->order, fp);
     if (split_root == 1) {
         tree->node_count++;
         y.pos_in_disk = tree->node_count;
     }
-    btNode z = new_node(tree->order, y.isLeaf);
+    btNode z = new_node(tree->order, y.flag_folha);
     tree->node_count++;
     z.pos_in_disk = tree->node_count;
     int t = (tree->order / 2);
@@ -89,52 +89,52 @@ void bt_split_child(btNode x, int pos, bTree *tree, FILE *fp, int split_root) {
     if (tree->order % 2 == 0) {
         t--;
     }
-    z.numKeys = t;
+    z.num_funcs = t;
 
     if (tree->order % 2 != 0) {
         t--;
     }
-    for (int j = 0; j <= t && (j + t + 1) <= y.numKeys - 1; j++) {
-        z.keys[j] = y.keys[j + t + 1];
-        y.keys[j + t + 1].codigo = -1;
-        y.keys[j + t + 1].salario = -1;
+    for (int j = 0; j <= t && (j + t + 1) <= y.num_funcs - 1; j++) {
+        z.funcs[j] = y.funcs[j + t + 1];
+        y.funcs[j + t + 1].codigo = -1;
+        y.funcs[j + t + 1].salario = -1;
     }
 
-    if (y.isLeaf == 0) {
+    if (y.flag_folha == 0) {
         for (int j = 0; j <= t; j++) {
-            z.kids[j] = y.kids[j + t + 1];
-            y.kids[j + t + 1] = -1;
+            z.filhos[j] = y.filhos[j + t + 1];
+            y.filhos[j + t + 1] = -1;
         }
     }
-    y.numKeys = t;
+    y.num_funcs = t;
 
 
     if (split_root == 1) {
-        x.kids[pos] = y.pos_in_disk;
-        x.kids[pos + 1] = z.pos_in_disk;
+        x.filhos[pos] = y.pos_in_disk;
+        x.filhos[pos + 1] = z.pos_in_disk;
     } else {
         int j, i, r;
         for (j = 0; j < tree->order; j++) {
-            if (x.kids[j] == y.pos_in_disk) {
+            if (x.filhos[j] == y.pos_in_disk) {
                 for (i = j + 1; i < tree->order; i += 2) {
                     if (i + 1 < tree->order)
-                        x.kids[i + 1] = x.kids[i];
+                        x.filhos[i + 1] = x.filhos[i];
                 }
                 r = j;
             }
         }
-        x.kids[r + 1] = z.pos_in_disk;
+        x.filhos[r + 1] = z.pos_in_disk;
     }
 
 
     for (int j = pos; j < tree->order - 2; j += 2) {
-        x.keys[j + 1] = x.keys[j];
+        x.funcs[j + 1] = x.funcs[j];
     }
 
-    x.keys[pos] = y.keys[t];
-    y.keys[t].codigo = -1;
-    y.keys[t].salario = -1;
-    x.numKeys++;
+    x.funcs[pos] = y.funcs[t];
+    y.funcs[t].codigo = -1;
+    y.funcs[t].salario = -1;
+    x.num_funcs++;
 
     disk_write(x, tree->order, fp);
     disk_write(y, tree->order, fp);
@@ -143,70 +143,70 @@ void bt_split_child(btNode x, int pos, bTree *tree, FILE *fp, int split_root) {
 
 btNode bt_insert_nonfull(btNode node, element key, bTree *tree, FILE *fp) {
 
-    int pos = node.numKeys;
+    int pos = node.num_funcs;
 
-    if (node.isLeaf == 1) {
+    if (node.flag_folha == 1) {
         int i = pos - 1;
-        while (i >= 0 && key.codigo < node.keys[i].codigo) {
-            node.keys[i + 1] = node.keys[i];
-            node.keys[i].codigo = -1;
-            node.keys[i].salario = -1;
+        while (i >= 0 && key.codigo < node.funcs[i].codigo) {
+            node.funcs[i + 1] = node.funcs[i];
+            node.funcs[i].codigo = -1;
+            node.funcs[i].salario = -1;
             i--;
         }
         if (i + 1 != pos) {
-            node.keys[i + 1] = key;
+            node.funcs[i + 1] = key;
         } else {
-            node.keys[pos] = key;
+            node.funcs[pos] = key;
         }
-        node.numKeys++;
+        node.num_funcs++;
         disk_write(node, tree->order, fp);
         return node;
     } else {
         int n_pd = node.pos_in_disk;
         int i = pos - 1;
-        while (key.codigo < node.keys[i].codigo && i >= 0) {
+        while (key.codigo < node.funcs[i].codigo && i >= 0) {
             i--;
             pos--;
         }
 
-        btNode x = disk_read(node.kids[pos], tree->order, fp);
-        if (x.numKeys == tree->order - 1) {
+        btNode x = disk_read(node.filhos[pos], tree->order, fp);
+        if (x.num_funcs == tree->order - 1) {
             bt_split_child(node, pos, tree, fp, 0);
             btNode x1 = disk_read(n_pd, tree->order, fp);
-            if (key.codigo > x1.keys[pos].codigo)
+            if (key.codigo > x1.funcs[pos].codigo)
                 pos++;
         }
         btNode x1 = disk_read(n_pd, tree->order, fp);
-        btNode x2 = disk_read(x1.kids[pos], tree->order, fp);
+        btNode x2 = disk_read(x1.filhos[pos], tree->order, fp);
         bt_insert_nonfull(x2, key, tree, fp);
     }
 }
 
 
 element bt_delete_max(btNode node, int order, FILE *fp) {
-    if (node.isLeaf == 1) {
-        node.keys[node.numKeys - 1].codigo = -1;
-        node.keys[node.numKeys - 1].salario = -1;
-        node.numKeys--;
+    if (node.flag_folha == 1) {
+        node.funcs[node.num_funcs - 1].codigo = -1;
+        node.funcs[node.num_funcs - 1].salario = -1;
+        node.num_funcs--;
         disk_write(node, order, fp);
-        return node.keys[node.numKeys - 1];
+        return node.funcs[node.num_funcs - 1];
     } else {
-        btNode x = disk_read(node.kids[node.numKeys], order, fp);
+        btNode x = disk_read(node.filhos[node.num_funcs], order, fp);
         bt_delete_max(x, order, fp);
     }
 }
 
 element bt_delete_min(btNode node, int order, FILE *fp) {
-    if (node.isLeaf == 1) {
-        element x = node.keys[0];
-        for (int j = 0; j < node.numKeys; j++)
-            node.keys[j] = node.keys[j + 1];
-        node.numKeys--;
+    if (node.flag_folha == 1) {
+        element x = node.funcs[0];
+        for (int j = 0; j < node.num_funcs; j++)
+            node.funcs[j] = node.funcs[j + 1];
+        node.num_funcs--;
         disk_write(node, order, fp);
         return x;
     } else {
 
-        btNode x = disk_read(node.kids[0], order, fp);
+        btNode x = disk_read(node.filhos[0], order, fp);
         bt_delete_min(x, order, fp);
     }
 }
@@ -214,28 +214,28 @@ element bt_delete_min(btNode node, int order, FILE *fp) {
 void bt_merge_children(btNode node, int pos, int order, FILE *fp) {
     int t = (order / 2);
 
-    btNode y = disk_read(node.kids[pos], order, fp);
-    btNode z = disk_read(node.kids[pos + 1], order, fp);
+    btNode y = disk_read(node.filhos[pos], order, fp);
+    btNode z = disk_read(node.filhos[pos + 1], order, fp);
 
-    y.keys[t - 1] = node.keys[pos];
-    node.keys[pos].codigo = -1;
-    node.keys[pos].salario = -1;
+    y.funcs[t - 1] = node.funcs[pos];
+    node.funcs[pos].codigo = -1;
+    node.funcs[pos].salario = -1;
     for (int j = 0; j < t - 1; j++) {
-        y.keys[t + j] = z.keys[j];
+        y.funcs[t + j] = z.funcs[j];
     }
-    if (y.isLeaf == 0) {
+    if (y.flag_folha == 0) {
         for (int j = 0; j < t; j++) {
-            y.kids[t + j] = z.kids[j];
+            y.filhos[t + j] = z.filhos[j];
         }
     }
-    y.numKeys = order - 1;
-    for (int j = pos + 1; j < node.numKeys; j++) {
-        node.keys[j - 1] = node.keys[j];
+    y.num_funcs = order - 1;
+    for (int j = pos + 1; j < node.num_funcs; j++) {
+        node.funcs[j - 1] = node.funcs[j];
     }
-    for (int j = pos + 2; j < node.numKeys + 1; j++) {
-        node.kids[j - 1] = node.kids[j];
+    for (int j = pos + 2; j < node.num_funcs + 1; j++) {
+        node.filhos[j - 1] = node.filhos[j];
     }
-    node.numKeys--;
+    node.num_funcs--;
     //free(z);
     disk_write(y, order, fp);
     disk_write(node, order, fp);
@@ -243,27 +243,27 @@ void bt_merge_children(btNode node, int pos, int order, FILE *fp) {
 
 void bt_borrow_from_left_sibling(btNode node, int pos, int order, FILE *fp) {
     int t = (order / 2);
-    btNode y = disk_read(node.kids[pos], order, fp);
-    btNode z = disk_read(node.kids[pos - 1], order, fp);
+    btNode y = disk_read(node.filhos[pos], order, fp);
+    btNode z = disk_read(node.filhos[pos - 1], order, fp);
 
     for (int j = t - 1; j > 0; j--) {
-        y.keys[j] = y.keys[j - 1];
+        y.funcs[j] = y.funcs[j - 1];
     }
 
-    y.keys[0] = node.keys[pos - 1];
-    node.keys[pos - 1] = z.keys[z.numKeys - 1];
+    y.funcs[0] = node.funcs[pos - 1];
+    node.funcs[pos - 1] = z.funcs[z.num_funcs - 1];
 
-    z.keys[z.numKeys - 1].codigo = -1;
-    z.keys[z.numKeys - 1].salario = -1;
+    z.funcs[z.num_funcs - 1].codigo = -1;
+    z.funcs[z.num_funcs - 1].salario = -1;
 
-    if (y.isLeaf == 0) {
+    if (y.flag_folha == 0) {
         for (int j = t; j > 1; j--) {
-            y.kids[j + 1] = y.kids[j];
+            y.filhos[j + 1] = y.filhos[j];
         }
-        y.kids[1] = z.kids[z.numKeys + 1];
+        y.filhos[1] = z.filhos[z.num_funcs + 1];
     }
-    y.numKeys = t;
-    z.numKeys--;
+    y.num_funcs = t;
+    z.num_funcs--;
     disk_write(z, order, fp);
     disk_write(y, order, fp);
     disk_write(node, order, fp);
@@ -271,29 +271,29 @@ void bt_borrow_from_left_sibling(btNode node, int pos, int order, FILE *fp) {
 
 void bt_borrow_from_right_sibling(btNode node, int pos, int order, FILE *fp) {
     int t = (order / 2);
-    btNode y = disk_read(node.kids[pos], order, fp);
-    btNode z = disk_read(node.kids[pos + 1], order, fp);
+    btNode y = disk_read(node.filhos[pos], order, fp);
+    btNode z = disk_read(node.filhos[pos + 1], order, fp);
 
-    y.keys[y.numKeys] = node.keys[pos];
-    node.keys[pos] = z.keys[0];
+    y.funcs[y.num_funcs] = node.funcs[pos];
+    node.funcs[pos] = z.funcs[0];
 
-    for (int j = 0; j < z.numKeys; j++) {
-        if (j + 1 == z.numKeys) {
-            z.keys[j].codigo = -1;
-            z.keys[j].salario = -1;
+    for (int j = 0; j < z.num_funcs; j++) {
+        if (j + 1 == z.num_funcs) {
+            z.funcs[j].codigo = -1;
+            z.funcs[j].salario = -1;
         } else
-            z.keys[j] = z.keys[j + 1];
+            z.funcs[j] = z.funcs[j + 1];
     }
 
 
-    if (y.isLeaf == 0) {
+    if (y.flag_folha == 0) {
         for (int j = t; j > 1; j--) {
-            y.kids[j + 1] = y.kids[j];
+            y.filhos[j + 1] = y.filhos[j];
         }
-        y.kids[1] = z.kids[z.numKeys + 1];
+        y.filhos[1] = z.filhos[z.num_funcs + 1];
     }
-    y.numKeys = t;
-    z.numKeys--;
+    y.num_funcs = t;
+    z.num_funcs--;
     disk_write(z, order, fp);
     disk_write(y, order, fp);
     disk_write(node, order, fp);
@@ -303,52 +303,52 @@ void bt_delete_safe(btNode node, element key, int order, FILE *fp) {
     int t = (order / 2);
     int borrowed;
     int pos = 0;
-    while (pos <= node.numKeys - 1 && key.codigo > node.keys[pos].codigo)
+    while (pos <= node.num_funcs - 1 && key.codigo > node.funcs[pos].codigo)
         pos++;
-    if (pos <= node.numKeys && key.codigo == node.keys[pos].codigo) {
-        if (node.isLeaf == 1) {
-            for (int j = pos; j < node.numKeys; j++)
-                node.keys[j] = node.keys[j + 1];
-            if (pos == node.numKeys - 1) {
-                node.keys[pos].codigo = -1;
-                node.keys[pos].salario = -1;
+    if (pos <= node.num_funcs && key.codigo == node.funcs[pos].codigo) {
+        if (node.flag_folha == 1) {
+            for (int j = pos; j < node.num_funcs; j++)
+                node.funcs[j] = node.funcs[j + 1];
+            if (pos == node.num_funcs - 1) {
+                node.funcs[pos].codigo = -1;
+                node.funcs[pos].salario = -1;
             }
-            node.numKeys--;
+            node.num_funcs--;
             disk_write(node, order, fp);
         } else {
-            btNode y = disk_read(node.kids[pos], order, fp);
-            if (y.numKeys > t - 1) {
-                node.keys[pos] = bt_delete_max(y, order, fp);
+            btNode y = disk_read(node.filhos[pos], order, fp);
+            if (y.num_funcs > t - 1) {
+                node.funcs[pos] = bt_delete_max(y, order, fp);
                 disk_write(node, order, fp);
             } else {
-                btNode z = disk_read(node.kids[pos + 1], order, fp);
-                if (z.numKeys > t - 1) {
-                    node.keys[pos] = bt_delete_min(z, order, fp);
+                btNode z = disk_read(node.filhos[pos + 1], order, fp);
+                if (z.num_funcs > t - 1) {
+                    node.funcs[pos] = bt_delete_min(z, order, fp);
                     disk_write(node, order, fp);
                 } else {
                     bt_merge_children(node, pos, order, fp);
-                    btNode node_child = disk_read(node.kids[pos], order, fp);
+                    btNode node_child = disk_read(node.filhos[pos], order, fp);
                     bt_delete_safe(node_child, key, order, fp);
                 }
             }
         }
-    } else if (node.isLeaf == 0) {
+    } else if (node.flag_folha == 0) {
         int m = pos; //default
-        btNode y = disk_read(node.kids[pos], order, fp);
-        if (y.numKeys == t - 1) {
+        btNode y = disk_read(node.filhos[pos], order, fp);
+        if (y.num_funcs == t - 1) {
             borrowed = 0;
             if (pos > 0) {
-                btNode z = disk_read(node.kids[pos - 1], order, fp);
-                if (z.numKeys > t - 1) {
+                btNode z = disk_read(node.filhos[pos - 1], order, fp);
+                if (z.num_funcs > t - 1) {
                     bt_borrow_from_left_sibling(node, pos, order, fp);
                     borrowed = 1;
                 } else {
                     m = pos - 1;
                 }
             }
-            if (borrowed == 0 && pos <= node.numKeys && node.kids[pos + 1] != -1) {
-                btNode z = disk_read(node.kids[pos + 1], order, fp);
-                if (z.numKeys > t - 1) {
+            if (borrowed == 0 && pos <= node.num_funcs && node.filhos[pos + 1] != -1) {
+                btNode z = disk_read(node.filhos[pos + 1], order, fp);
+                if (z.num_funcs > t - 1) {
                     bt_borrow_from_right_sibling(node, pos, order, fp);
                     borrowed = 1;
                 } else {
@@ -357,14 +357,14 @@ void bt_delete_safe(btNode node, element key, int order, FILE *fp) {
             }
             if (borrowed == 0) {
                 bt_merge_children(node, m, order, fp);
-                btNode x = disk_read(node.kids[m], order, fp);
+                btNode x = disk_read(node.filhos[m], order, fp);
                 y = x;
             }
         }
         if (m != pos) {
             bt_delete_safe(y, key, order, fp);
         } else {
-            btNode new_y = disk_read(node.kids[pos], order, fp);
+            btNode new_y = disk_read(node.filhos[pos], order, fp);
             bt_delete_safe(new_y, key, order, fp);
         }
     }
@@ -393,9 +393,9 @@ void btInsert(bTree *tree, element key, FILE *fp) {
         tree->root = disk_read(0, tree->order, fp);
     btNode root = tree->root;
 
-    if (root.numKeys == tree->order - 1) {
+    if (root.num_funcs == tree->order - 1) {
         btNode s = new_node(tree->order, 0);
-        s.kids[0] = root.pos_in_disk;
+        s.filhos[0] = root.pos_in_disk;
         bt_split_child(s, 0, tree, fp, 1);
         s = disk_read(0, tree->order, fp);
         tree->root = s;
@@ -409,15 +409,15 @@ void btInsert(bTree *tree, element key, FILE *fp) {
 int btSearch(btNode node, int order, element key, FILE *fp) {
 
     int pos = 0;
-    while (pos < node.numKeys && key.codigo > node.keys[pos].codigo) {
+    while (pos < node.num_funcs && key.codigo > node.funcs[pos].codigo) {
         pos++;
     }
-    if (pos <= node.numKeys && key.codigo == node.keys[pos].codigo) {
+    if (pos <= node.num_funcs && key.codigo == node.funcs[pos].codigo) {
         return node.pos_in_disk;
-    } else if (node.isLeaf == 1) {
+    } else if (node.flag_folha == 1) {
         return -1;
     } else {
-        btNode x = disk_read(node.kids[pos], order, fp);
+        btNode x = disk_read(node.filhos[pos], order, fp);
         return btSearch(x, order, key, fp);
     }
 }
@@ -427,8 +427,8 @@ int btDelete(bTree *tree, element key, FILE *fp) {
     btNode root = tree->root;
     bt_delete_safe(root, key, tree->order, fp);
     btNode new_root = disk_read(0, tree->order, fp);
-    if (new_root.numKeys == 0 && (new_root.isLeaf == 0)) {
-        btNode x = disk_read(new_root.kids[0], tree->order, fp);
+    if (new_root.num_funcs == 0 && (new_root.flag_folha == 0)) {
+        btNode x = disk_read(new_root.filhos[0], tree->order, fp);
         x.pos_in_disk = 0;
         disk_write(x, tree->order, fp);
         tree->root = x;
@@ -439,33 +439,33 @@ int btDelete(bTree *tree, element key, FILE *fp) {
 }
 
 element btfindMax(btNode node, int order, FILE *fp) {
-    if (node.isLeaf == 1) {
-        return node.keys[node.numKeys - 1];
+    if (node.flag_folha == 1) {
+        return node.funcs[node.num_funcs - 1];
     } else {
-        btNode x = disk_read(node.kids[node.numKeys], order, fp);
+        btNode x = disk_read(node.filhos[node.num_funcs], order, fp);
         btfindMax(x, order, fp);
     }
 }
 
 element btfindMin(btNode node, int order, FILE *fp) {
-    if (node.isLeaf == 1) {
-        return node.keys[0];
+    if (node.flag_folha == 1) {
+        return node.funcs[0];
     } else {
-        btNode x = disk_read(node.kids[0], order, fp);
+        btNode x = disk_read(node.filhos[0], order, fp);
         btfindMin(x, order, fp);
     }
 }
 
 void btPrintTree(bTree *tree, queue *q, FILE *fp) {
-    if (tree->root.numKeys == 0) {
+    if (tree->root.num_funcs == 0) {
         printf("\nThe B-Tree is empty\n");
     } else {
-        btNode end = {.numKeys = -1};
+        btNode end = {.num_funcs = -1};
         insert(q, tree->root);
         int item_count = 1;
         while (!isEmpty(q)) {
             btNode current = removeData(q);
-            if (current.numKeys == -1) {
+            if (current.num_funcs == -1) {
                 printf("\n");
                 insert(q, end);
                 if (item_count == 0)
@@ -476,8 +476,8 @@ void btPrintTree(bTree *tree, queue *q, FILE *fp) {
                 if (current.pos_in_disk == 0)
                     insert(q, end);
                 for (int i = 0; i < tree->order; i++) {
-                    if (current.kids[i] != -1) {
-                        btNode x = disk_read(current.kids[i], tree->order, fp);
+                    if (current.filhos[i] != -1) {
+                        btNode x = disk_read(current.filhos[i], tree->order, fp);
                         insert(q, x);
                         item_count++;
                     }
@@ -505,13 +505,13 @@ void btPrintElement(bTree tree, element key, FILE *fp) {
     }
 
     int i = 0;
-    while (i < node.numKeys && node.keys[i].codigo < key.codigo) {
+    while (i < node.num_funcs && node.funcs[i].codigo < key.codigo) {
         i++;
     }
 
-    if (node.keys[i].codigo == key.codigo) {
-        printf("|| Funcionario encontrado:\n|| Nome: Fulano\n|| Codigo = %d\n|| Salario = %.2f\n", node.keys[i].codigo,
-               node.keys[i].salario);
+    if (node.funcs[i].codigo == key.codigo) {
+        printf("|| Funcionario encontrado:\n|| Nome: Fulano\n|| Codigo = %d\n|| Salario = %.2f\n", node.funcs[i].codigo,
+               node.funcs[i].salario);
     } else {
         printf("Funcionario nao encontrado.\n");
     }
@@ -519,18 +519,18 @@ void btPrintElement(bTree tree, element key, FILE *fp) {
 
 btNode btSearchNode(btNode node, int order, element key, FILE *fp) {
     int pos = 0;
-    while (pos < node.numKeys && key.codigo > node.keys[pos].codigo) {
+    while (pos < node.num_funcs && key.codigo > node.funcs[pos].codigo) {
         pos++;
     }
 
-    if (pos <= node.numKeys && key.codigo == node.keys[pos].codigo) {
+    if (pos <= node.num_funcs && key.codigo == node.funcs[pos].codigo) {
         return node;
-    } else if (node.isLeaf == 1) {
+    } else if (node.flag_folha == 1) {
         btNode null_node = {0};
         null_node.pos_in_disk = -1;
         return null_node;
     } else {
-        btNode x = disk_read(node.kids[pos], order, fp);
+        btNode x = disk_read(node.filhos[pos], order, fp);
         return btSearchNode(x, order, key, fp);
     }
 }

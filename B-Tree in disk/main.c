@@ -1,7 +1,7 @@
 #include "interface.h"
 
 
-int main(){
+int main() {
 
     FILE *fp;
     fp = fopen("file.dat", "wb+");
